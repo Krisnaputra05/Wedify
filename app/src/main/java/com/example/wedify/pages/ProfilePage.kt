@@ -41,7 +41,7 @@ fun ProfilePage(modifier: Modifier = Modifier) {
                 popUpTo("login"){inclusive=true}
             }
         } ) {
-            Text(text = "Log Out")
+            Text(text = "Log")
         }
     }
 }
