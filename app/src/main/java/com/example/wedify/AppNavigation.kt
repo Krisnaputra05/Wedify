@@ -1,0 +1,61 @@
+package com.example.wedify
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.wedify.pages.CategoryProductPage
+import com.example.wedify.pages.CheckOutPage
+import com.example.wedify.pages.ProductDetailsPage
+import com.example.wedify.pages.ProfilePage
+import com.example.wedify.screen.AuthScreen
+import com.example.wedify.screen.HomeScreen
+import com.example.wedify.screen.LoginScreen
+import com.example.wedify.screen.SignupScreen
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+
+@Composable
+fun AppNavigation(modifier: Modifier = Modifier) {
+
+    val navController = rememberNavController()
+    GlobalNavigation.navController = navController
+    val isLoggeidn = Firebase.auth.currentUser!= null
+
+    val firstPage = if(isLoggeidn) "home" else "auth"
+
+    NavHost(navController=navController, startDestination = firstPage) {
+
+        composable("auth"){
+            AuthScreen(modifier,navController)
+        }
+        composable("login"){
+            LoginScreen(modifier,navController)
+        }
+        composable("signup"){
+            SignupScreen(modifier,navController)
+        }
+
+        composable("checkout"){
+            CheckOutPage(modifier)
+        }
+
+        composable("home"){
+            HomeScreen(modifier,navController)
+        }
+        composable("category-products/{categoryId}"){
+            val categoryId = it.arguments?.getString("categoryId")
+            CategoryProductPage(modifier,categoryId?:"")
+        }
+        composable("product-details/{productId}"){
+            val productId = it.arguments?.getString("productId")
+            ProductDetailsPage(modifier,productId?:"")
+        }
+    }
+}
+
+object GlobalNavigation{
+lateinit var navController: NavHostController
+}
