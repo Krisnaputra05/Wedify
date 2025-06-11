@@ -9,10 +9,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.wedify.pages.CategoryProductPage
 import com.example.wedify.pages.CheckOutPage
 import com.example.wedify.pages.ProductDetailsPage
-import com.example.wedify.pages.ProfilePage
 import com.example.wedify.screen.AuthScreen
 import com.example.wedify.screen.HomeScreen
 import com.example.wedify.screen.LoginScreen
+import com.example.wedify.screen.PaymentScreen
 import com.example.wedify.screen.SignupScreen
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -39,7 +39,7 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         }
 
         composable("checkout"){
-            CheckOutPage(modifier)
+            CheckOutPage(modifier, navController)
         }
 
         composable("home"){
@@ -53,6 +53,12 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             val productId = it.arguments?.getString("productId")
             ProductDetailsPage(modifier,productId?:"")
         }
+        composable("payment/{bookingId}") { backStackEntry ->
+            val bookingId = backStackEntry.arguments?.getString("bookingId") ?: ""
+            PaymentScreen(navController, bookingId)
+        }
+
+
     }
 }
 

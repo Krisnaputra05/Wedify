@@ -128,15 +128,16 @@ object AppUtil {
 
         val userRef = db.collection("users").document(uid)
 
-        // Konversi BookingModel ke Map, TANGGAL & JAM dipisah
+        // Konversi BookingModel ke Map
         val bookingMap = mapOf(
             "lokasi" to booking.location,
             "tanggal" to booking.date,
-            "jam" to booking.time
+            "jam" to booking.time,
+            "timestamp" to FieldValue.serverTimestamp() // supaya urut by waktu booking
         )
 
-        // Simpan ke field 'booking' dalam dokumen user
-        userRef.set(mapOf("booking" to bookingMap), SetOptions.merge())
+        // Simpan ke collection "bookings" di bawah user
+        userRef.collection("bookings").add(bookingMap)
             .addOnSuccessListener {
                 showToast(context, "Booking berhasil disimpan.")
             }
@@ -145,6 +146,31 @@ object AppUtil {
             }
     }
 
+    fun savePaymentToBooking(context: Context, bookingId: String, paymentStatus: String) {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            showToast(context, "Anda belum login.")
+            return
+        }
+
+        val bookingRef = db.collection("users")
+            .document(uid)
+            .collection("bookings")
+            .document(bookingId)
+
+        val paymentMap = mapOf(
+            "paymentStatus" to paymentStatus,
+            "paymentTimestamp" to FieldValue.serverTimestamp()
+        )
+
+        bookingRef.set(paymentMap, SetOptions.merge())
+            .addOnSuccessListener {
+                showToast(context, "Pembayaran berhasil disimpan.")
+            }
+            .addOnFailureListener {
+                showToast(context, "Gagal menyimpan pembayaran: ${it.message}")
+            }
+    }
 
 
     fun showDatePicker(context: Context, onDateSelected: (String) -> Unit) {

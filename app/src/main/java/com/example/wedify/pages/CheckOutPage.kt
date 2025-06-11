@@ -1,17 +1,8 @@
 package com.example.wedify.pages
 
-import android.content.Context
-import android.location.Geocoder
 import android.util.Log
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
@@ -22,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.wedify.AppUtil
 import com.example.wedify.model.BookingModel
 import com.example.wedify.model.ProductModel
@@ -29,12 +21,11 @@ import com.example.wedify.model.UserModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.google.android.gms.maps.model.LatLng
 import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
-fun CheckOutPage(modifier: Modifier = Modifier) {
+fun CheckOutPage(modifier: Modifier = Modifier, navController: NavHostController) {
 
     val userModel = remember { mutableStateOf(UserModel()) }
     val productList = remember { mutableStateListOf(ProductModel()) }
@@ -42,11 +33,9 @@ fun CheckOutPage(modifier: Modifier = Modifier) {
     val discount = remember { mutableStateOf(0f) }
     val tax = remember { mutableStateOf(0f) }
     val total = remember { mutableStateOf(0f) }
-    var selectedLatLng by remember { mutableStateOf<LatLng?>(null) }
     val selectedTime = remember { mutableStateOf("") }
     val selectedDate = remember { mutableStateOf("") }
     val selectedLocationText = remember { mutableStateOf("") }
-    var showMapPicker by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -62,7 +51,7 @@ fun CheckOutPage(modifier: Modifier = Modifier) {
         total.value = subTotal.value - discount.value + tax.value
     }
 
-    LaunchedEffect(key1 = Unit) {
+    LaunchedEffect(Unit) {
         Firebase.firestore.collection("users")
             .document(FirebaseAuth.getInstance().currentUser?.uid!!)
             .get().addOnCompleteListener {
@@ -86,6 +75,7 @@ fun CheckOutPage(modifier: Modifier = Modifier) {
                 }
             }
     }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -96,7 +86,6 @@ fun CheckOutPage(modifier: Modifier = Modifier) {
         Text(text = "Checkout", fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tampilan untuk memilih tanggal
         OutlinedTextField(
             value = if (selectedDate.value.isEmpty()) "Pilih Tanggal" else selectedDate.value,
             onValueChange = { },
@@ -104,7 +93,6 @@ fun CheckOutPage(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    // Misalkan AppUtil.showDatePicker menerima context dan lambda yang mengembalikan tanggal dalam bentuk String
                     AppUtil.showDatePicker(context) { date ->
                         selectedDate.value = date
                     }
@@ -124,31 +112,13 @@ fun CheckOutPage(modifier: Modifier = Modifier) {
                 },
             label = { Text("Jam") }
         )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (showMapPicker) {
-            MapPickerPage(
-                onLocationPicked = { latLng, address ->
-                    selectedLatLng = latLng
-                    selectedLocationText.value = address
-                },
-                onBack = { showMapPicker = false }
-            )
-        } else {
-            OutlinedTextField(
-                value = selectedLocationText.value.ifEmpty { "Pilih Lokasi" },
-                onValueChange = {},
-                enabled = false,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showMapPicker = true },
-                label = { Text("Lokasi") }
-            )
-        }
-
-
+        OutlinedTextField(
+            value = selectedLocationText.value,
+            onValueChange = { selectedLocationText.value = it },
+            modifier = Modifier
+                .fillMaxWidth(),
+            label = { Text("Lokasi") }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider()
@@ -169,7 +139,7 @@ fun CheckOutPage(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                if (selectedLatLng != null && selectedDate.value.isNotEmpty() && selectedTime.value.isNotEmpty()) {
+                if (selectedLocationText.value.isNotEmpty() && selectedDate.value.isNotEmpty() && selectedTime.value.isNotEmpty()) {
                     val bookingData = BookingModel(
                         date = selectedDate.value,
                         time = selectedTime.value,
@@ -178,18 +148,18 @@ fun CheckOutPage(modifier: Modifier = Modifier) {
 
                     Firebase.firestore.collection("users")
                         .document(FirebaseAuth.getInstance().currentUser?.uid!!)
-                        .update("booking", bookingData)
-                        .addOnSuccessListener {
-                            Log.d("CheckOutPage", "Booking berhasil disimpan ke users")
-                            AppUtil.showToast(context, "Booking berhasil disimpan!")
+                        .collection("bookings")
+                        .add(bookingData)
+                        .addOnSuccessListener { documentRef ->
+                            val bookingId = documentRef.id
+                            AppUtil.showToast(context, "Booking berhasil!")
+                            navController.navigate("payment/$bookingId")
                         }
                         .addOnFailureListener {
-                            Log.e("CheckOutPage", "Gagal menyimpan booking", it)
                             AppUtil.showToast(context, "Gagal menyimpan booking")
                         }
                 } else {
-                    Log.w("CheckOutPage", "Tanggal, jam, atau lokasi belum dipilih")
-                    AppUtil.showToast(context, "Lengkapi tanggal, jam, dan lokasi dulu")
+                    AppUtil.showToast(context, "Lengkapi semua data terlebih dahulu")
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -197,10 +167,9 @@ fun CheckOutPage(modifier: Modifier = Modifier) {
             Text(text = "Booking Sekarang")
         }
 
+
     }
 }
-
-private fun AppUtil.showLocationPicker(context: Context, function: Any) {}
 
 @Composable
 fun RowCheckOutItems(title: String, value: String) {
@@ -209,21 +178,6 @@ fun RowCheckOutItems(title: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(text = title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text(text = "Rp" + value, fontSize = 18.sp)
-    }
-}
-
-
-fun getAddressFromLatLng(context: Context, latLng: LatLng): String {
-    return try {
-        val geocoder = Geocoder(context, Locale.getDefault())
-        val addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
-        if (!addresses.isNullOrEmpty()) {
-            addresses[0].getAddressLine(0)
-        } else {
-            "Alamat tidak ditemukan"
-        }
-    } catch (e: Exception) {
-        "Gagal mendapatkan alamat"
+        Text(text = "Rp$value", fontSize = 18.sp)
     }
 }
