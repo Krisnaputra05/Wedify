@@ -1,5 +1,6 @@
 package com.example.wedify.pages
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,6 +81,7 @@ fun ProductDetailsPage(modifier: Modifier = Modifier, productId: String) {
             modifier = modifier
                 .fillMaxSize()
                 .padding(16.dp)
+                .background(Color.White)
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 80.dp) // beri ruang agar tidak tertutup nav bar
         ) {

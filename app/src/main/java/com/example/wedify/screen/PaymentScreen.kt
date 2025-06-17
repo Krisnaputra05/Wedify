@@ -22,7 +22,6 @@ import com.example.wedify.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
 @Composable
 fun PaymentScreen(
     navController: NavController,

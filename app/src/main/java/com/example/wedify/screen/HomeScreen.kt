@@ -1,5 +1,6 @@
 package com.example.wedify.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -24,7 +25,10 @@ import com.example.wedify.ui.theme.pinkbut
 import com.example.wedify.ui.theme.poppinsFont
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, navController: NavHostController) {
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    navController: NavHostController
+) {
     val navItemList = listOf(
         NavItem("BERANDA", Icons.Default.Home),
         NavItem("KERANJANG", Icons.Default.ShoppingCart),
@@ -38,13 +42,11 @@ fun HomeScreen(modifier: Modifier = Modifier, navController: NavHostController) 
 
     Scaffold(
         bottomBar = {
-            NavigationBar (containerColor = Color.White){
+            NavigationBar(containerColor = Color.White) {
                 navItemList.forEachIndexed { index, navItem ->
                     NavigationBarItem(
                         selected = index == selectedIndex,
-                        onClick = {
-                            selectedIndex = index
-                        },
+                        onClick = { selectedIndex = index },
                         icon = {
                             Icon(
                                 imageVector = navItem.icon,
@@ -64,19 +66,29 @@ fun HomeScreen(modifier: Modifier = Modifier, navController: NavHostController) 
                             selectedTextColor = pinkbut,
                             unselectedIconColor = Color.Black,
                             unselectedTextColor = Color.Black,
-                            indicatorColor = Color.Transparent // biar tidak ada background oval
+                            indicatorColor = Color.Transparent
                         )
                     )
                 }
             }
         }
-    ) {
-        ContentScreen(modifier = modifier.padding(it), selectedIndex = selectedIndex)
+    ) { innerPadding ->
+        ContentScreen(
+            modifier = modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .background(Color.White)
+                .navigationBarsPadding(), // penting agar konten tidak terpotong atau mengambang
+            selectedIndex = selectedIndex
+        )
     }
 }
 
 @Composable
-fun ContentScreen(modifier: Modifier = Modifier, selectedIndex: Int) {
+fun ContentScreen(
+    modifier: Modifier = Modifier,
+    selectedIndex: Int
+) {
     when (selectedIndex) {
         0 -> HomePage(modifier)
         1 -> CartPage(modifier)

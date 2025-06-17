@@ -1,6 +1,6 @@
 package com.example.wedify.components
 
-import androidx.compose.foundation.clickable
+import  androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -47,7 +47,7 @@ fun ProductItemView(modifier: Modifier = Modifier,product : ProductModel) {
             modifier = Modifier.padding(12.dp   )
         ){
             AsyncImage(
-                model = product.images.get(1) ,
+                model = product.images.firstOrNull() ?: "",
                 contentDescription = product.title,
                 modifier = Modifier.height(120.dp)
                     .fillMaxWidth()
