@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,17 +12,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.wedify.R
 import com.example.wedify.ui.theme.pinkbut
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 @Composable
@@ -31,16 +36,16 @@ fun SplashScreen(navController: NavHostController) {
 
     // Tahapan animasi
     LaunchedEffect(Unit) {
-        stage = 1 // Bola kecil
+        stage = 1
         circleScale.animateTo(
-            targetValue = 20f, // Membesar hingga menutupi layar
+            targetValue = 20f,
             animationSpec = tween(1200, easing = FastOutSlowInEasing)
         )
-        stage = 2 // Layar putih
+        stage = 2
         delay(600)
-        stage = 3 // Scrambled text
+        stage = 3
         delay(1500)
-        stage = 4 // Splash content
+        stage = 4
     }
 
     Box(
@@ -104,8 +109,6 @@ fun scramble(word: String): String {
     return String(letters)
 }
 
-
-
 @Composable
 fun SplashContent(navController: NavHostController) {
     var showContent by remember { mutableStateOf(false) }
@@ -115,13 +118,14 @@ fun SplashContent(navController: NavHostController) {
         showContent = true
     }
 
+    val coroutineScope = rememberCoroutineScope()
+
     Column(
-        modifier = Modifier
-            .fillMaxSize() ,// Pastikan background menyatu
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Gambar splash atas - pastikan tidak ada padding visual
+        // Gambar atas
         Image(
             painter = painterResource(id = R.drawable.splash_top),
             contentDescription = "Splash Top",
@@ -157,24 +161,26 @@ fun SplashContent(navController: NavHostController) {
 
             AnimatedVisibility(
                 visible = showContent,
-                enter = fadeIn(animationSpec = tween(1000, delayMillis = 800))
+                enter = fadeIn(tween(600, delayMillis = 600)) +
+                        slideInVertically(
+                            initialOffsetY = { it / 2 },
+                            animationSpec = tween(600, easing = FastOutSlowInEasing)
+                        ) +
+                        scaleIn(initialScale = 0.8f, animationSpec = tween(600))
             ) {
-                Button(
-                    onClick = {
+                AnimatedLanjutButton {
+                    coroutineScope.launch {
+                        delay(300) // Biar animasi selesai
                         val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
                         navController.navigate(if (isLoggedIn) "home" else "auth") {
                             popUpTo("splash") { inclusive = true }
                         }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = pinkbut),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text("LANJUT", color = Color.White)
+                    }
                 }
             }
         }
 
-        // Gambar splash bawah
+        // Gambar bawah
         Image(
             painter = painterResource(id = R.drawable.splash_bottom),
             contentDescription = "Splash Bottom",
@@ -184,3 +190,33 @@ fun SplashContent(navController: NavHostController) {
     }
 }
 
+@Composable
+fun AnimatedLanjutButton(onClick: () -> Unit) {
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(150),
+        label = "ButtonScale"
+    )
+
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = pinkbut),
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier
+            .scale(scale)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        tryAwaitRelease()
+                        isPressed = false
+                    }
+                )
+            }
+            .padding(top = 8.dp)
+            .height(48.dp)
+    ) {
+        Text("LANJUT", color = Color.White)
+    }
+}

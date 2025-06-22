@@ -61,7 +61,7 @@ fun ProfilePage(modifier: Modifier = Modifier) {
             text = "PROFIL",
             modifier = Modifier.padding(20.dp),
             fontSize = 14.sp,
-            color = Color.Gray
+            color = Color.Black
         )
 
         Column(
@@ -113,6 +113,24 @@ fun ProfilePage(modifier: Modifier = Modifier) {
                 ProfileMenuItem("Layanan Pelanggan", "", Icons.Default.Call),
                 ProfileMenuItem("FAQ", "", Icons.Default.HelpOutline)
             ))
+
+            Button(
+                onClick = {
+                    FirebaseAuth.getInstance().signOut()
+                    navController.navigate("auth") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFE91E63),
+                    contentColor = Color.White
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 0.dp)
+            ) {
+                Text(text = "Logout", fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -170,9 +188,11 @@ fun ProfileSection(title: String, items: List<ProfileMenuItem>) {
                             contentDescription = null
                         )
                     }
+
                     if (index < items.lastIndex) {
                         Divider(color = Color.LightGray)
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }

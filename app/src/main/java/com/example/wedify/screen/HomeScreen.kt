@@ -3,8 +3,10 @@ package com.example.wedify.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
@@ -18,9 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.wedify.pages.CartPage
-import com.example.wedify.pages.FavoritePage
 import com.example.wedify.pages.HomePage
 import com.example.wedify.pages.ProfilePage
+import com.example.wedify.pages.TransactionPage
 import com.example.wedify.ui.theme.pinkbut
 import com.example.wedify.ui.theme.poppinsFont
 
@@ -32,7 +34,7 @@ fun HomeScreen(
     val navItemList = listOf(
         NavItem("BERANDA", Icons.Default.Home),
         NavItem("KERANJANG", Icons.Default.ShoppingCart),
-        NavItem("FAVORIT", Icons.Default.Favorite),
+        NavItem("TRANSKASI", Icons.AutoMirrored.Filled.LibraryBooks),
         NavItem("PROFIL", Icons.Default.Person),
     )
 
@@ -78,8 +80,9 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
                 .background(Color.White)
-                .navigationBarsPadding(), // penting agar konten tidak terpotong atau mengambang
-            selectedIndex = selectedIndex
+                .navigationBarsPadding(),
+            selectedIndex = selectedIndex,
+            navController = navController // ← kirim navController
         )
     }
 }
@@ -87,12 +90,13 @@ fun HomeScreen(
 @Composable
 fun ContentScreen(
     modifier: Modifier = Modifier,
-    selectedIndex: Int
+    selectedIndex: Int,
+    navController: NavHostController // ← hanya ditambahkan ini
 ) {
     when (selectedIndex) {
         0 -> HomePage(modifier)
         1 -> CartPage(modifier)
-        2 -> FavoritePage(modifier)
+        2 -> TransactionPage(navController = navController, modifier = modifier) // ← perbaikan di sini
         3 -> ProfilePage(modifier)
     }
 }

@@ -9,6 +9,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.wedify.pages.CategoryProductPage
 import com.example.wedify.pages.CheckOutPage
 import com.example.wedify.pages.ProductDetailsPage
+import com.example.wedify.pages.SearchPage
+import com.example.wedify.pages.TransactionPage
 import com.example.wedify.screen.AuthScreen
 import com.example.wedify.screen.EditProfileScreen
 import com.example.wedify.screen.HomeScreen
@@ -47,6 +49,9 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable("checkout") {
             CheckOutPage(modifier, navController)
         }
+        composable("transaction") {
+            TransactionPage(navController = navController)
+        }
 
         composable("home") {
             HomeScreen(modifier, navController)
@@ -66,6 +71,10 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable("editProfile") {
             EditProfileScreen()
         }
+        composable("search") {
+            SearchPage(navController)
+        }
+
     }
 }
 

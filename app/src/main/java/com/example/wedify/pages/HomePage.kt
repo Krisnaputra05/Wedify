@@ -16,6 +16,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.wedify.GlobalNavigation.navController
 import com.example.wedify.components.BannerView
 import com.example.wedify.components.FeaturedProductSectionView
 import com.example.wedify.components.HeaderView
@@ -31,7 +32,7 @@ fun HomePage(modifier: Modifier = Modifier) {
             .padding(start = 16.dp, end = 16.dp)
             .navigationBarsPadding()
     ) {
-        HeaderView()
+        HeaderView(navController = navController)
         Spacer(modifier = Modifier.height(24.dp))
         BannerView()
         Text(

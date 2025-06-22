@@ -48,7 +48,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
-    implementation("androidx.compose.ui:ui-text:1.6.0")
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
@@ -62,14 +61,17 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("androidx.compose.ui:ui:1.6.6")
+    implementation("androidx.compose.material3:material3:1.2.1")
+    implementation("androidx.activity:activity-compose:1.9.0")
     implementation ("com.google.firebase:firebase-storage-ktx:20.3.0")
     implementation("io.coil-kt:coil-compose:2.2.0")
     implementation("com.tbuonomo:dotsindicator:5.1.0")
     implementation ("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.material:material:1.6.1")
     implementation ("com.google.android.material:material:1.12.0")
-    implementation ("androidx.activity:activity-compose:1.7.2" )
     implementation ("com.google.firebase:firebase-storage-ktx")
 
 
 }
+apply(plugin = "com.google.gms.google-services")

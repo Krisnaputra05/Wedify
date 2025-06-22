@@ -17,12 +17,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.wedify.ui.theme.pinkbut
 import com.example.wedify.ui.theme.poppinsFont
 
 @Composable
-fun HeaderView(modifier: Modifier = Modifier) {
-    var searchText by remember { mutableStateOf("") }
+fun HeaderView(modifier: Modifier = Modifier, navController: NavController) {
+    val searchText = remember { mutableStateOf("") }
 
     Row(
         modifier = modifier
@@ -38,12 +39,16 @@ fun HeaderView(modifier: Modifier = Modifier) {
                 .height(50.dp)
                 .clip(RoundedCornerShape(24.dp))
                 .border(1.dp, pinkbut, RoundedCornerShape(24.dp))
-                .background(Color(0xFFF6F6F6)),
+                .background(Color(0xFFF6F6F6))
+                .clickable {
+                    navController.navigate("search")
+                },
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextField(
-                value = searchText,
-                onValueChange = { searchText = it },
+                value = searchText.value,
+                onValueChange = {},
+                enabled = false, // supaya tidak bisa diketik, hanya untuk klik
                 placeholder = {
                     Text(
                         text = "CARI",
@@ -59,14 +64,14 @@ fun HeaderView(modifier: Modifier = Modifier) {
                     backgroundColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent
+                    disabledIndicatorColor = Color.Transparent,
+                    textColor = Color.Black
                 ),
-                maxLines = 1,
                 singleLine = true
             )
 
             IconButton(
-                onClick = { /* aksi search */ },
+                onClick = { navController.navigate("search") },
                 modifier = Modifier
                     .padding(end = 4.dp)
                     .size(40.dp)
@@ -100,3 +105,4 @@ fun HeaderView(modifier: Modifier = Modifier) {
         }
     }
 }
+
