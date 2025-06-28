@@ -71,6 +71,8 @@ dependencies {
     implementation("androidx.compose.material:material:1.6.1")
     implementation ("com.google.android.material:material:1.12.0")
     implementation ("com.google.firebase:firebase-storage-ktx")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
+
 
 
 }

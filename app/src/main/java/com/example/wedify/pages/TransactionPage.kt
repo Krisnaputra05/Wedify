@@ -48,21 +48,15 @@ fun TransactionPage(navController: NavController, modifier: Modifier = Modifier)
     }
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            IconButton(
-                onClick = { navController.popBackStack() }
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Transaksi", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        }
+        Text(
+            text = "Transaksi",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+        )
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -89,7 +83,7 @@ fun TransactionPage(navController: NavController, modifier: Modifier = Modifier)
             val status = (it["status"] ?: "").toString().lowercase()
             when (selectedTab) {
                 "Pembayaran" -> status.contains("belum") || status.contains("bayar") || status.contains("pending")
-                "Selesai" -> status == "selesai"
+                "Selesai" -> status == "sudah bayar"
                 "Tertunda" -> status == "belum bayar"
                 "Dibatalkan" -> status == "dibatalkan"
                 else -> false

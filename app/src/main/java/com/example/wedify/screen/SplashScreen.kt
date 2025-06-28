@@ -1,5 +1,6 @@
 package com.example.wedify.screen
 
+import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
@@ -25,8 +26,10 @@ import androidx.navigation.NavHostController
 import com.example.wedify.R
 import com.example.wedify.ui.theme.pinkbut
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
 
 @Composable
@@ -34,13 +37,9 @@ fun SplashScreen(navController: NavHostController) {
     var stage by remember { mutableStateOf(0) }
     val circleScale = remember { Animatable(0f) }
 
-    // Tahapan animasi
     LaunchedEffect(Unit) {
         stage = 1
-        circleScale.animateTo(
-            targetValue = 20f,
-            animationSpec = tween(1200, easing = FastOutSlowInEasing)
-        )
+        circleScale.animateTo(20f, animationSpec = tween(1200, easing = FastOutSlowInEasing))
         stage = 2
         delay(600)
         stage = 3
@@ -56,7 +55,6 @@ fun SplashScreen(navController: NavHostController) {
     ) {
         when (stage) {
             1 -> ExpandingDot(scale = circleScale.value)
-            2 -> {}
             3 -> AnimatedScrambledText()
             4 -> SplashContent(navController)
         }
@@ -68,10 +66,7 @@ fun ExpandingDot(scale: Float) {
     Box(
         modifier = Modifier
             .size(20.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .graphicsLayer { scaleX = scale; scaleY = scale }
             .background(Color.White, shape = CircleShape)
     )
 }
@@ -111,96 +106,73 @@ fun scramble(word: String): String {
 
 @Composable
 fun SplashContent(navController: NavHostController) {
-    var showContent by remember { mutableStateOf(false) }
+    val user = FirebaseAuth.getInstance().currentUser
+    var role by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    LaunchedEffect(Unit) {
-        delay(200)
-        showContent = true
-    }
-
-    val coroutineScope = rememberCoroutineScope()
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Gambar atas
-        Image(
-            painter = painterResource(id = R.drawable.splash_top),
-            contentDescription = "Splash Top",
-            modifier = Modifier.fillMaxWidth(),
-            contentScale = ContentScale.FillWidth
-        )
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 32.dp)
-        ) {
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn(animationSpec = tween(800)) + scaleIn()
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo),
-                        contentDescription = "Logo",
-                        modifier = Modifier.size(100.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "WEDIFY",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = pinkbut
-                    )
-                }
+    // Ambil data role dari Firestore
+    LaunchedEffect(user) {
+        if (user == null) {
+            navController.navigate("auth") {
+                popUpTo("splash") { inclusive = true }
             }
+        } else {
+            val uid = user.uid
+            try {
+                val doc = FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(uid)
+                    .get()
+                    .await() // Coroutine-safe call
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn(tween(600, delayMillis = 600)) +
-                        slideInVertically(
-                            initialOffsetY = { it / 2 },
-                            animationSpec = tween(600, easing = FastOutSlowInEasing)
-                        ) +
-                        scaleIn(initialScale = 0.8f, animationSpec = tween(600))
-            ) {
-                AnimatedLanjutButton {
-                    coroutineScope.launch {
-                        delay(300) // Biar animasi selesai
-                        val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
-                        navController.navigate(if (isLoggedIn) "home" else "auth") {
-                            popUpTo("splash") { inclusive = true }
-                        }
-                    }
+                role = doc.getString("role") ?: "user"
+                isLoading = false
+            } catch (e: Exception) {
+                isLoading = false
+                navController.navigate("home") {
+                    popUpTo("splash") { inclusive = true }
                 }
             }
         }
+    }
 
-        // Gambar bawah
-        Image(
-            painter = painterResource(id = R.drawable.splash_bottom),
-            contentDescription = "Splash Bottom",
-            modifier = Modifier.fillMaxWidth(),
-            contentScale = ContentScale.FillWidth
-        )
+    // Navigasi hanya setelah data berhasil didapat
+    LaunchedEffect(role, isLoading) {
+        if (!isLoading && role != null) {
+            val destination = if (role == "vendor") "vendor-dashboard" else "home"
+            navController.navigate(destination) {
+                popUpTo("splash") { inclusive = true }
+            }
+        }
+    }
+
+    // Tampilan loading
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator()
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Memuat data pengguna...", color = Color.Gray)
     }
 }
 
+
 @Composable
-fun AnimatedLanjutButton(onClick: () -> Unit) {
+fun AnimatedLanjutButton(enabled: Boolean = true, onClick: () -> Unit) {
     var isPressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.95f else 1f,
         animationSpec = tween(150),
-        label = "ButtonScale"
+        label = "scale"
     )
 
     Button(
         onClick = onClick,
+        enabled = enabled,
         colors = ButtonDefaults.buttonColors(containerColor = pinkbut),
         shape = RoundedCornerShape(20.dp),
         modifier = Modifier

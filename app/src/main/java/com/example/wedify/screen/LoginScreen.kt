@@ -25,6 +25,8 @@ import com.example.wedify.R
 import com.example.wedify.ui.theme.pinkbut
 import com.example.wedify.ui.theme.poppinsFont
 import com.example.wedify.viewmodel.AuthViewModel
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun LoginScreen(
@@ -35,7 +37,7 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var context = LocalContext.current
+    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -44,7 +46,6 @@ fun LoginScreen(
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
-            // Row: Back Icon & Title
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -67,10 +68,9 @@ fun LoginScreen(
                     textAlign = TextAlign.Center,
                     fontFamily = poppinsFont,
                 )
-                Spacer(modifier = Modifier.width(48.dp)) // Untuk menjaga keseimbangan dengan IconButton
+                Spacer(modifier = Modifier.width(48.dp)) // spasi dummy agar rata tengah
             }
 
-            // Logo
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo",
@@ -81,7 +81,6 @@ fun LoginScreen(
                     .align(Alignment.CenterHorizontally)
             )
 
-            // Email Input
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -97,7 +96,6 @@ fun LoginScreen(
                 )
             )
 
-            // Password Input
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -114,19 +112,37 @@ fun LoginScreen(
                 )
             )
 
-            // Login Button
             Button(
                 onClick = {
                     isLoading = true
-                    authViewModel.login(email,password) { succes,errorMassage->
-                        if (succes){
-                            isLoading =false
-                            navController.navigate("home") {
-                                popUpTo ("auth"){ inclusive = true }
+                    authViewModel.login(email, password) { success, errorMessage ->
+                        if (success) {
+                            val uid = FirebaseAuth.getInstance().currentUser?.uid
+                            if (uid != null) {
+                                FirebaseFirestore.getInstance()
+                                    .collection("users")
+                                    .document(uid)
+                                    .get()
+                                    .addOnSuccessListener { document ->
+                                        isLoading = false
+                                        val role = document.getString("role") ?: "user"
+                                        val destination =
+                                            if (role == "vendor") "vendor-dashboard" else "home"
+                                        navController.navigate(destination) {
+                                            popUpTo("auth") { inclusive = true }
+                                        }
+                                    }
+                                    .addOnFailureListener {
+                                        isLoading = false
+                                        AppUtil.showToast(context, "Gagal mengambil role.")
+                                    }
+                            } else {
+                                isLoading = false
+                                AppUtil.showToast(context, "Gagal mengambil UID.")
                             }
-                        }else{
-                            isLoading =false
-                            AppUtil.showToast(context,errorMassage?:"Something went Wrong")
+                        } else {
+                            isLoading = false
+                            AppUtil.showToast(context, errorMessage ?: "Terjadi kesalahan.")
                         }
                     }
                 },
@@ -140,10 +156,9 @@ fun LoginScreen(
                     contentColor = Color.White
                 )
             ) {
-                Text(text = if (isLoading) "Wellcome back" else "Lanjutkan", fontSize = 22.sp)
+                Text(text = if (isLoading) "Memproses..." else "Lanjutkan", fontSize = 22.sp)
             }
 
-            // Forgot Password Text
             Text(
                 text = "Lupa kata sandi?",
                 modifier = Modifier
@@ -155,7 +170,6 @@ fun LoginScreen(
             )
         }
 
-        // Bottom Sign Up Row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
