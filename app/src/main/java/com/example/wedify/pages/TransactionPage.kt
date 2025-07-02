@@ -1,17 +1,13 @@
 package com.example.wedify.pages
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,19 +17,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.wedify.ui.theme.pinkbut
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.text.NumberFormat
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionPage(navController: NavController, modifier: Modifier = Modifier) {
     val uid = FirebaseAuth.getInstance().currentUser?.uid
     val db = Firebase.firestore
 
-    val tabList = listOf("Pembayaran", "Selesai", "Tertunda", "Dibatalkan")
-    var selectedTab by remember { mutableStateOf("Pembayaran") }
+    val tabList = listOf("Semua", "Selesai", "Tertunda", "Dibatalkan")
+    var selectedTab by remember { mutableStateOf("Semua") }
     var bookings by remember { mutableStateOf(listOf<Map<String, Any>>()) }
 
     LaunchedEffect(uid) {
@@ -46,15 +44,24 @@ fun TransactionPage(navController: NavController, modifier: Modifier = Modifier)
                 }
         }
     }
+    Column(modifier = modifier
+        .fillMaxSize()
+        .padding(12.dp)) {
 
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Text(
-            text = "Transaksi",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
+        CenterAlignedTopAppBar(
+            title = {
+                Text(
+                    text = "TRANSAKSI",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = Color.Black
+                )
+            },
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = Color.White
+            )
         )
 
         Row(
@@ -82,9 +89,9 @@ fun TransactionPage(navController: NavController, modifier: Modifier = Modifier)
         val filtered = bookings.filter {
             val status = (it["status"] ?: "").toString().lowercase()
             when (selectedTab) {
-                "Pembayaran" -> status.contains("belum") || status.contains("bayar") || status.contains("pending")
+                "Semua" -> true
                 "Selesai" -> status == "sudah bayar"
-                "Tertunda" -> status == "belum bayar"
+                "Tertunda" -> status == "belum bayar" || status == "menunggu konfirmasi admin"
                 "Dibatalkan" -> status == "dibatalkan"
                 else -> false
             }
@@ -97,7 +104,7 @@ fun TransactionPage(navController: NavController, modifier: Modifier = Modifier)
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(filtered) { booking ->
-                    TransactionCard(booking, navController)
+                    TransactionCard(booking, navController, selectedTab)
                     Spacer(Modifier.height(12.dp))
                 }
             }
@@ -106,41 +113,40 @@ fun TransactionPage(navController: NavController, modifier: Modifier = Modifier)
 }
 
 @Composable
-fun TransactionCard(data: Map<String, Any>, navController: NavController) {
+fun TransactionCard(data: Map<String, Any>, navController: NavController, currentTab: String) {
     val formatter = NumberFormat.getNumberInstance(Locale("id", "ID"))
+    val db = Firebase.firestore
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFEF4F4F4),
+            contentColor = Color.Black
+        ),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Vendor
             Text(
                 text = data["vendor"]?.toString() ?: "Vendor",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
 
-            // Nama Produk
             Text(text = data["productName"]?.toString() ?: "Paket Pernikahan")
 
-            // Kategori Produk
             Text(
                 text = "Kategori: ${data["category"]?.toString() ?: "-"}",
                 fontSize = 14.sp,
                 color = Color.DarkGray
             )
 
-            // Tanggal, Jam, Lokasi
             Text(text = "Tanggal: ${data["date"] ?: "-"}", fontSize = 14.sp)
             Text(text = "Jam: ${data["time"] ?: "-"}", fontSize = 14.sp)
             Text(text = "Lokasi: ${data["location"] ?: "-"}", fontSize = 14.sp)
 
-            // Total Harga
             val rawTotal = data["total"]
             val total = when (rawTotal) {
                 is Number -> rawTotal.toLong()
@@ -155,27 +161,79 @@ fun TransactionCard(data: Map<String, Any>, navController: NavController) {
 
             Spacer(Modifier.height(8.dp))
 
-            // Status & Aksi
             val status = (data["status"] ?: "").toString().lowercase()
-            Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                when {
-                    status.contains("belum") || status.contains("bayar") || status.contains("pending") -> {
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                if (currentTab == "Tertunda") {
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                         Button(onClick = {
                             navController.navigate("payment/${data["id"]}")
-                        }) {
+                        },colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE91E63), // warna background button
+                            contentColor = Color.White // warna teks
+                        ),
+                            border = BorderStroke(1.dp, Color(0xFFFF5C8D))
+                            ) {
                             Text("Bayar Sekarang")
                         }
-                    }
-                    status == "selesai" -> {
-                        Button(onClick = { /* Navigasi ke review */ }) {
-                            Text("Nilai Pesanan")
+
+                        if (status == "belum bayar" || status.contains("pending")) {
+                            Button(onClick = {
+                                if (userId != null && data["id"] != null) {
+                                    db.collection("users")
+                                        .document(userId)
+                                        .collection("bookings")
+                                        .document(data["id"].toString())
+                                        .update("status", "dibatalkan")
+                                }
+                            },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFE91E63), // warna background button
+                                    contentColor = Color.White // warna teks
+                                ),
+                                border = BorderStroke(1.dp, Color(0xFFFF5C8D)))
+                            {
+                                Text("Ajukan Pembatalan")
+                            }
                         }
                     }
-                    status == "dibatalkan" -> {
-                        Text("Pesanan Dibatalkan", color = Color.Gray)
-                    }
-                    else -> {
-                        Text("Status: ${data["status"]}")
+                } else {
+                    Text("Status: ${data["status"]}")
+
+                    if ((currentTab == "Semua") && (status == "belum bayar" || status.contains("pending"))) {
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                            Button(
+                                onClick = {
+                                    navController.navigate("payment/${data["id"]}")
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFE91E63),
+                                    contentColor = Color.White
+                                ),
+                                border = BorderStroke(1.dp, Color(0xFFFF5C8D))
+                            ) {
+                                Text("Bayar Sekarang")
+                            }
+                            Button(
+                                onClick = {
+                                    if (userId != null && data["id"] != null) {
+                                        db.collection("users")
+                                            .document(userId)
+                                            .collection("bookings")
+                                            .document(data["id"].toString())
+                                            .update("status", "dibatalkan")
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFE91E63),
+                                    contentColor = Color.White
+                                ),
+                                border = BorderStroke(1.dp, Color(0xFFFF5C8D))
+                            ) {
+                                Text("Ajukan Pembatalan")
+                            }
+                        }
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package com.example.wedify.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
@@ -22,8 +23,10 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.graphics.Color
 import com.example.wedify.AppUtil
 import androidx.compose.ui.platform.LocalContext
+import com.example.wedify.ui.theme.pinkbut
 
 
 @Composable
@@ -53,10 +56,13 @@ fun CartItemView(
     Card(
         modifier = modifier
             .padding(8.dp)
-            .fillMaxWidth(),
+            .border(
+                width = 2.dp,
+                color = pinkbut, // warna pinggiran pink
+                shape = RoundedCornerShape(12.dp)
+            ),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(4.dp)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F4F4))
     ) {
         Row(
             modifier = Modifier

@@ -35,12 +35,14 @@ fun HomePage(modifier: Modifier = Modifier) {
         HeaderView(navController = navController)
         Spacer(modifier = Modifier.height(24.dp))
         BannerView()
+        Spacer(modifier = Modifier.height(24.dp))
         Text(
             "Categories", style = TextStyle(
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
         )
+        Spacer(modifier = Modifier.height(24.dp))
         CategoriesView()
         Spacer(modifier = Modifier.height(24.dp))
         FeaturedProductSectionView(horizontalPadding = 0.dp)

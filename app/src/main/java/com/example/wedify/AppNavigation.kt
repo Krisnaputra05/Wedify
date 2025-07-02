@@ -7,6 +7,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.wedify.pages.*
+import com.example.wedify.profile.FaqPage
+import com.example.wedify.profile.KebijakanPage
+import com.example.wedify.profile.LayananPage
 import com.example.wedify.screen.*
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -24,6 +27,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable("checkout") { CheckOutPage(modifier, navController) }
         composable("transaction") { TransactionPage(navController = navController) }
         composable("home") { HomeScreen(modifier, navController) }
+        composable("home/{tabIndex}") { backStackEntry ->
+            val tabIndex = backStackEntry.arguments?.getString("tabIndex")?.toIntOrNull() ?: 0
+            HomeScreen(navController = navController, initialTabIndex = tabIndex)
+        }
+
         composable("category-products/{categoryId}") {
             val categoryId = it.arguments?.getString("categoryId") ?: ""
             CategoryProductPage(modifier, categoryId)
@@ -54,7 +62,15 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable("verifikasi-booking") {
             VerifikasiBookingPage(navController)
         }
-
+        composable("faq") {
+            FaqPage(modifier, navController)
+        }
+        composable("layanan") {
+            LayananPage(modifier, navController)
+        }
+        composable("kebijakan") {
+            KebijakanPage(modifier, navController)
+        }
     }
 }
 

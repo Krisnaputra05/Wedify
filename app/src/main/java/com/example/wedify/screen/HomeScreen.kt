@@ -29,17 +29,18 @@ import com.example.wedify.ui.theme.poppinsFont
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    navController: NavHostController
+    navController: NavHostController,
+    initialTabIndex: Int = 0
 ) {
     val navItemList = listOf(
         NavItem("BERANDA", Icons.Default.Home),
         NavItem("KERANJANG", Icons.Default.ShoppingCart),
-        NavItem("TRANSKASI", Icons.AutoMirrored.Filled.LibraryBooks),
+        NavItem("TRANSAKSI", Icons.AutoMirrored.Filled.LibraryBooks),
         NavItem("PROFIL", Icons.Default.Person),
     )
 
     var selectedIndex by rememberSaveable {
-        mutableStateOf(0)
+        mutableStateOf(initialTabIndex)
     }
 
     Scaffold(

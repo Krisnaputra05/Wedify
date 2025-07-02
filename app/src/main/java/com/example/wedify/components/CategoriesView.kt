@@ -1,3 +1,4 @@
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -7,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -46,11 +48,16 @@ fun CategoryItem(category: CategoryModel) {
             .size(100.dp)
             .clickable {
                 GlobalNavigation.navController.navigate("category-products/"+category.id)
-            },
+            }
+            .border(
+                width = 2.dp,
+                color = Color(0xFFFF69B4),
+                shape = RoundedCornerShape(12.dp)
+            ),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = Color(0xFEF4F4F4)
         )
     ) {
         Column(

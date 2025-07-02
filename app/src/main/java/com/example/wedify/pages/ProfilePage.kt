@@ -6,13 +6,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,13 +20,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.wedify.GlobalNavigation
 import com.example.wedify.GlobalNavigation.navController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfilePage(modifier: Modifier = Modifier) {
+fun ProfilePage(modifier: Modifier = Modifier,innerPadding: PaddingValues = PaddingValues(0.dp)) {
     val auth = FirebaseAuth.getInstance()
     val db = Firebase.firestore
     val user = auth.currentUser
@@ -55,18 +54,31 @@ fun ProfilePage(modifier: Modifier = Modifier) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .padding(innerPadding)
+            .background(Color.White)
+
+    // background utama putih
     ) {
-        Text(
-            text = "PROFIL",
-            modifier = Modifier.padding(20.dp),
-            fontSize = 14.sp,
-            color = Color.Black
+        CenterAlignedTopAppBar(
+            title = {
+                Text(
+                    text = "PROFILE",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = Color.Black
+                )
+            },
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = Color.White
+            )
         )
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
+                .background(Color.White)
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -104,15 +116,26 @@ fun ProfilePage(modifier: Modifier = Modifier) {
             ProfileSection(title = "UMUM", items = listOf(
                 ProfileMenuItem("Bahasa", "Indonesia", Icons.Default.Public),
                 ProfileMenuItem("Kebijakan Privasi", "", Icons.Default.CheckCircle),
-                ProfileMenuItem("Syarat Dan Ketentuan", "", Icons.Default.Info)
+                ProfileMenuItem("Syarat Dan Ketentuan", "", Icons.Default.Info){
+                    GlobalNavigation.navController.navigate("kebijakan")}
             ))
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            ProfileSection(title = "BANTUAN", items = listOf(
-                ProfileMenuItem("Layanan Pelanggan", "", Icons.Default.Call),
-                ProfileMenuItem("FAQ", "", Icons.Default.HelpOutline)
-            ))
+            ProfileSection(
+                title = "BANTUAN",
+                items = listOf(
+                    ProfileMenuItem("Layanan Pelanggan", "", Icons.Default.Call) {
+                        GlobalNavigation.navController.navigate("layanan")
+                    },
+                    ProfileMenuItem("FAQ", "", Icons.AutoMirrored.Filled.HelpOutline) {
+                        GlobalNavigation.navController.navigate("faq")
+                    }
+                )
+            )
+
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
@@ -127,7 +150,6 @@ fun ProfilePage(modifier: Modifier = Modifier) {
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 0.dp)
             ) {
                 Text(text = "Logout", fontWeight = FontWeight.Bold)
             }
@@ -138,7 +160,8 @@ fun ProfilePage(modifier: Modifier = Modifier) {
 data class ProfileMenuItem(
     val title: String,
     val value: String = "",
-    val icon: ImageVector
+    val icon: ImageVector,
+    val onClick: () -> Unit = {}
 )
 
 @Composable
@@ -156,16 +179,19 @@ fun ProfileSection(title: String, items: List<ProfileMenuItem>) {
             modifier = Modifier.padding(vertical = 8.dp)
         )
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White), // pastikan card tidak punya background lain
             elevation = CardDefaults.cardElevation(4.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(modifier = Modifier.padding(8.dp)) {
                 items.forEachIndexed { index, item ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { }
+                            .clickable { item.onClick() }
                             .padding(vertical = 12.dp, horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {

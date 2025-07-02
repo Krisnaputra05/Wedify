@@ -26,7 +26,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import coil.compose.rememberAsyncImagePainter
+import com.example.wedify.GlobalNavigation
 import com.example.wedify.model.ProductModel
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -71,7 +74,12 @@ fun FeaturedProductSectionView(
             modifier = Modifier.fillMaxHeight()
         ) {
             items(products) { product ->
-                Column(
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFEF4F4F4)
+                    ),
+                    elevation = CardDefaults.cardElevation(4.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight()
@@ -80,85 +88,95 @@ fun FeaturedProductSectionView(
                             color = Color(0xFFFF69B4),
                             shape = RoundedCornerShape(16.dp)
                         )
-                        .padding(12.dp)
                 ) {
-                    // Gambar produk
-                    Box(
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.LightGray)
+                            .padding(12.dp)
                     ) {
-                        Image(
-                            painter = rememberAsyncImagePainter(product.images.firstOrNull() ?: ""),
-                            contentDescription = product.title,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Judul dan ikon favorit
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = product.title,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                text = "Setiap gambar, satu kisah yang abadi.",
-                                fontSize = 12.sp,
-                                color = Color.Gray
+                        // Gambar produk
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.LightGray)
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter(product.images.firstOrNull() ?: ""),
+                                contentDescription = product.title,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
-                        Icon(
-                            imageVector = Icons.Default.Favorite,
-                            contentDescription = "Favorit",
-                            tint = Color.Black
-                        )
-                    }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    // Rating
-                    Row {
-                        repeat(5) {
+                        // Judul & favorit
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = product.title,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "Setiap gambar, satu kisah yang abadi.",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
                             Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Star",
-                                tint = Color(0xFFFFC107),
-                                modifier = Modifier.size(20.dp)
+                                imageVector = Icons.Default.Favorite,
+                                contentDescription = "Favorit",
+                                tint = Color.Black
                             )
                         }
-                    }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        // Rating
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                repeat(5) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = "Star",
+                                        tint = Color(0xFFFFC107),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
 
-                    Spacer(modifier = Modifier.height(8.dp))
 
-                    // Tombol “Lebih Lanjut”
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(50))
-                            .background(Color.White)
-                            .border(1.dp, Color(0xFFE91E63), RoundedCornerShape(50))
-                            .clickable { /* TODO: Navigasi ke detail */ }
-                            .padding(vertical = 6.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Lebih Lanjut",
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.Black,
-                            fontSize = 13.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Tombol "Lebih Lanjut"
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(50))
+                                .background(Color(0xFFFF69B4))
+                                .border(1.dp, Color(0xFFFF69B4), RoundedCornerShape(50))
+                                .clickable {
+                                    GlobalNavigation.navController.navigate("product-details/${product.id}")
+                                }
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Lebih Lanjut",
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                        }
                     }
                 }
             }
