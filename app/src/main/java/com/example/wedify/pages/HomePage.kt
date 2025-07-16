@@ -37,7 +37,7 @@ fun HomePage(modifier: Modifier = Modifier) {
         BannerView()
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            "Categories", style = TextStyle(
+            "Kategori", style = TextStyle(
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )

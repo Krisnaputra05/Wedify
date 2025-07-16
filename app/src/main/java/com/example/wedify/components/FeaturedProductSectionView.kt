@@ -36,7 +36,7 @@ import com.google.firebase.ktx.Firebase
 
 @Composable
 fun FeaturedProductSectionView(
-    title: String = "Produk Pilihan",
+    title: String = "Paket Pilihan",
     horizontalPadding: Dp = 0.dp
 ) {
     var products by remember { mutableStateOf<List<ProductModel>>(emptyList()) }

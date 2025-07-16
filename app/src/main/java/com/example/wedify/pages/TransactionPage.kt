@@ -51,7 +51,7 @@ fun TransactionPage(navController: NavController, modifier: Modifier = Modifier)
         CenterAlignedTopAppBar(
             title = {
                 Text(
-                    text = "TRANSAKSI",
+                    text = "Transaksi",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold

@@ -4,11 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -81,27 +79,8 @@ fun HeaderView(modifier: Modifier = Modifier, navController: NavController) {
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = "Search",
-                    tint = Color.Black
-                )
+                    tint = Color.Black)
             }
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        // Tombol chat
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(pinkbut)
-                .clickable { /* aksi chat */ },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Chat,
-                contentDescription = "Chat",
-                tint = Color.White
-            )
         }
     }
 }

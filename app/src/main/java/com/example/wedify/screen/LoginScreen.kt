@@ -158,16 +158,6 @@ fun LoginScreen(
             ) {
                 Text(text = if (isLoading) "Memproses..." else "Lanjutkan", fontSize = 22.sp)
             }
-
-            Text(
-                text = "Lupa kata sandi?",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                color = Color.Gray,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center
-            )
         }
 
         Row(

@@ -1,7 +1,9 @@
 package com.example.wedify.pages
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -16,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.wedify.model.ProductModel
+import com.example.wedify.ui.theme.pinkbut
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
@@ -44,7 +48,12 @@ fun SearchPage(navController: NavController) {
             }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White) // Latar belakang halaman putih
+            .padding(16.dp)
+    ) {
         // Input & Filter
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = {
@@ -55,9 +64,15 @@ fun SearchPage(navController: NavController) {
                     launchSingleTop = true
                 }
             }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = pinkbut
+                )
             }
+
             Spacer(modifier = Modifier.width(8.dp))
+
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = {
@@ -74,10 +89,18 @@ fun SearchPage(navController: NavController) {
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("CARI") },
                 shape = RoundedCornerShape(10.dp),
-                singleLine = true
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.White
+                )
             )
+
             IconButton(onClick = { showFilterDialog = true }) {
-                Icon(Icons.Default.FilterList, contentDescription = "Filter", tint = Color(0xFFE91E63))
+                Icon(
+                    Icons.Default.FilterList,
+                    contentDescription = "Filter",
+                    tint = pinkbut
+                )
             }
         }
 
@@ -101,7 +124,7 @@ fun SearchPage(navController: NavController) {
                 items(filteredList) { product ->
                     ProductGridItem(product = product) {
                         product.id?.let { id ->
-                            navController.navigate("product-details/$id") // ← Ini diperbaiki
+                            navController.navigate("product-details/$id")
                         }
                     }
                 }
@@ -154,31 +177,61 @@ fun SearchPage(navController: NavController) {
 
 @Composable
 fun ProductGridItem(product: ProductModel, onClick: () -> Unit) {
+    val pinkStroke = Color(0xFFE91E63)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(0.75f)
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, pinkStroke),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF4F4F4)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = rememberAsyncImagePainter(product.images.firstOrNull() ?: ""),
-                contentDescription = "Image",
+            // Gambar dengan border pink dan rounded
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .background(Color.LightGray, RoundedCornerShape(8.dp))
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+                    .background(Color.White, RoundedCornerShape(12.dp))
+                    .border(BorderStroke(1.dp, pinkStroke), RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(product.images.firstOrNull() ?: ""),
+                    contentDescription = "Image",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
+
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Judul (maks 1 baris)
             Text(
                 text = product.title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // Harga
+            Text(
+                text = "Rp ${product.actualPrice}",
                 fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.Medium,
+                color = Color.Black
             )
         }
     }

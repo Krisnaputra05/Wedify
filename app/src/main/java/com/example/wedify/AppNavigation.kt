@@ -10,6 +10,7 @@ import com.example.wedify.pages.*
 import com.example.wedify.profile.FaqPage
 import com.example.wedify.profile.KebijakanPage
 import com.example.wedify.profile.LayananPage
+import com.example.wedify.profile.SyaratPage
 import com.example.wedify.screen.*
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -24,7 +25,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable("auth") { AuthScreen(modifier, navController) }
         composable("login") { LoginScreen(modifier, navController) }
         composable("signup") { SignupScreen(modifier, navController) }
-        composable("checkout") { CheckOutPage(modifier, navController) }
+        composable("checkout/{productIds}") { backStackEntry ->
+            val ids = backStackEntry.arguments?.getString("productIds") ?: ""
+            val productIds = ids.split(",")
+            CheckOutPage(modifier, navController, productIds)
+        }
         composable("transaction") { TransactionPage(navController = navController) }
         composable("home") { HomeScreen(modifier, navController) }
         composable("home/{tabIndex}") { backStackEntry ->
@@ -71,6 +76,10 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         composable("kebijakan") {
             KebijakanPage(modifier, navController)
         }
+        composable("syarat") {
+            SyaratPage(modifier, navController)
+        }
+
     }
 }
 

@@ -3,8 +3,8 @@ package com.example.wedify.pages
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +18,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.wedify.model.ProductModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +38,35 @@ fun AddEditProductPage(navController: NavController, productId: String? = null) 
     var newDetailValue by remember { mutableStateOf("") }
     var otherDetails by remember { mutableStateOf(mutableMapOf<String, String>()) }
 
+    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+    // Load data jika edit
+    LaunchedEffect(productId) {
+        if (productId != null) {
+            val doc = FirebaseFirestore.getInstance()
+                .collection("data")
+                .document("stok")
+                .collection("products")
+                .document(productId)
+                .get()
+                .await()
+
+            if (doc.exists()) {
+                val data = doc.toObject(ProductModel::class.java)
+                data?.let {
+                    title = it.title ?: ""
+                    description = it.description ?: ""
+                    price = it.price ?: ""
+                    actualPrice = it.actualPrice ?: ""
+                    category = it.category ?: ""
+                    location = it.location ?: ""
+                    imageUrls = it.images.toMutableList()
+                    otherDetails = it.otherDetails.toMutableMap()
+                }
+            }
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -44,7 +74,23 @@ fun AddEditProductPage(navController: NavController, productId: String? = null) 
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item {
-            Text("Tambah/Edit Produk", fontSize = 24.sp)
+            // Row tombol back + title
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Kembali"
+                    )
+                }
+                Text(
+                    if (productId != null) "Edit Produk" else "Tambah Produk",
+                    fontSize = 24.sp,
+                    modifier = Modifier.weight(1f)
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Judul") }, modifier = Modifier.fillMaxWidth())
@@ -69,12 +115,22 @@ fun AddEditProductPage(navController: NavController, productId: String? = null) 
 
             Column {
                 imageUrls.forEach { url ->
-                    Image(
-                        painter = rememberAsyncImagePainter(url),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxWidth().height(180.dp).padding(vertical = 4.dp),
-                        contentScale = ContentScale.Crop
-                    )
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = rememberAsyncImagePainter(url),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(180.dp)
+                                .padding(vertical = 4.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                        IconButton(onClick = {
+                            imageUrls = imageUrls.toMutableList().apply { remove(url) }
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Hapus Gambar")
+                        }
+                    }
                 }
             }
 
@@ -133,7 +189,6 @@ fun AddEditProductPage(navController: NavController, productId: String? = null) 
                 onClick = {
                     if (title.isNotEmpty()) {
                         isUploading = true
-                        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@Button
                         val productIdToUse = productId ?: UUID.randomUUID().toString()
 
                         val product = ProductModel(
@@ -146,7 +201,7 @@ fun AddEditProductPage(navController: NavController, productId: String? = null) 
                             location = location,
                             images = imageUrls,
                             otherDetails = otherDetails.toMap(),
-                            vendorId = uid // Simpan vendorId langsung ke field-nya
+                            vendorId = uid
                         )
 
                         FirebaseFirestore.getInstance()

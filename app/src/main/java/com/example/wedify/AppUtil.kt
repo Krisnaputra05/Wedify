@@ -9,6 +9,7 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import android.app.DatePickerDialog
+import com.example.wedify.model.ProductModel
 import java.util.*
 
 object AppUtil {
@@ -145,6 +146,63 @@ object AppUtil {
                 showToast(context, "Gagal menyimpan booking: ${it.message}")
             }
     }
+    fun addBookingDirect(context: Context, productId: String, onSuccess: (String) -> Unit) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid == null) {
+            showToast(context, "Anda belum login.")
+            return
+        }
+
+        if (!isValidProductId(productId)) {
+            showToast(context, "ID produk tidak valid.")
+            return
+        }
+
+        val productRef = Firebase.firestore
+            .collection("data")
+            .document("stok")
+            .collection("products")
+            .document(productId)
+
+        productRef.get().addOnSuccessListener { doc ->
+            if (doc.exists()) {
+                val product = doc.toObject(com.example.wedify.model.ProductModel::class.java)
+                if (product != null) {
+                    val bookingData = hashMapOf(
+                        "date" to "-",
+                        "time" to "-",
+                        "location" to "-",
+                        "total" to product.actualPrice.toFloat().toLong(),
+                        "status" to "belum bayar",
+                        "productId" to product.id,
+                        "productName" to product.title,
+                        "category" to product.category
+                    )
+
+                    Firebase.firestore.collection("users")
+                        .document(uid)
+                        .collection("bookings")
+                        .add(bookingData)
+                        .addOnSuccessListener { documentRef ->
+                            val bookingId = documentRef.id
+                            showToast(context, "Booking berhasil dibuat.")
+                            onSuccess(bookingId)
+                        }
+                        .addOnFailureListener {
+                            showToast(context, "Gagal menyimpan booking: ${it.message}")
+                        }
+                } else {
+                    showToast(context, "Data produk tidak ditemukan.")
+                }
+            } else {
+                showToast(context, "Produk tidak ditemukan di database.")
+            }
+        }.addOnFailureListener {
+            showToast(context, "Gagal mengambil data produk: ${it.message}")
+        }
+    }
+
+
 
     fun savePaymentToBooking(context: Context, bookingId: String, paymentStatus: String) {
         val uid = auth.currentUser?.uid

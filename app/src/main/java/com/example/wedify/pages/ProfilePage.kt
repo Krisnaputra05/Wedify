@@ -1,5 +1,6 @@
 package com.example.wedify.pages
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -62,7 +63,7 @@ fun ProfilePage(modifier: Modifier = Modifier,innerPadding: PaddingValues = Padd
         CenterAlignedTopAppBar(
             title = {
                 Text(
-                    text = "PROFILE",
+                    text = "Profile",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
@@ -91,8 +92,19 @@ fun ProfilePage(modifier: Modifier = Modifier,innerPadding: PaddingValues = Padd
                     .background(Color.LightGray),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = Color.DarkGray)
+                val photoUrl = userData?.get("photoUrl")?.toString()
+                if (!photoUrl.isNullOrEmpty()) {
+                    val painter = coil.compose.rememberAsyncImagePainter(photoUrl)
+                    Image(
+                        painter = painter,
+                        contentDescription = "Profile Image",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.DarkGray, modifier = Modifier.size(40.dp))
+                }
             }
+
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -103,7 +115,7 @@ fun ProfilePage(modifier: Modifier = Modifier,innerPadding: PaddingValues = Padd
             )
 
             Text(
-                text = "Edit Profil >",
+                text = "Edit Profil",
                 fontSize = 12.sp,
                 color = Color.Gray,
                 modifier = Modifier.clickable {
@@ -115,11 +127,11 @@ fun ProfilePage(modifier: Modifier = Modifier,innerPadding: PaddingValues = Padd
 
             ProfileSection(title = "UMUM", items = listOf(
                 ProfileMenuItem("Bahasa", "Indonesia", Icons.Default.Public),
-                ProfileMenuItem("Kebijakan Privasi", "", Icons.Default.CheckCircle),
                 ProfileMenuItem("Syarat Dan Ketentuan", "", Icons.Default.Info){
+                        GlobalNavigation.navController.navigate("syarat")},
+                ProfileMenuItem("Kebijakan Privasi", "", Icons.Default.CheckCircle){
                     GlobalNavigation.navController.navigate("kebijakan")}
             ))
-
             Spacer(modifier = Modifier.height(16.dp))
 
             ProfileSection(

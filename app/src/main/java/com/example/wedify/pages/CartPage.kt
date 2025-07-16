@@ -54,7 +54,7 @@ fun CartPage(modifier: Modifier = Modifier) {
         CenterAlignedTopAppBar(
             title = {
                 Text(
-                    text = "KERANJANG",
+                    text = "Keranjang",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
@@ -110,7 +110,8 @@ fun CartPage(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                GlobalNavigation.navController.navigate("checkout")
+                val ids = selectedIds.joinToString(",")
+                GlobalNavigation.navController.navigate("checkout/$ids")
             },
             enabled = selectedIds.isNotEmpty(),
             modifier = Modifier

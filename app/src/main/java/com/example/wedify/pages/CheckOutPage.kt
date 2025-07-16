@@ -1,7 +1,6 @@
 package com.example.wedify.pages
 
-import coil.compose.AsyncImage
-import androidx.compose.material3.TextFieldDefaults
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,14 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import com.example.wedify.AppUtil
-import com.example.wedify.GlobalNavigation
 import com.example.wedify.model.ProductModel
-import com.example.wedify.model.UserModel
 import com.example.wedify.ui.theme.pinkbut
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
@@ -30,290 +27,184 @@ import com.google.firebase.ktx.Firebase
 import java.text.NumberFormat
 import java.util.*
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CheckOutPage(modifier: Modifier = Modifier, navController: NavHostController) {
-    val userModel = remember { mutableStateOf(UserModel()) }
-    val productList = remember { mutableStateListOf<ProductModel>() }
-    val subTotal = remember { mutableStateOf(0f) }
-    val discount = remember { mutableStateOf(0f) }
-    val tax = remember { mutableStateOf(0f) }
-    val total = remember { mutableStateOf(0f) }
-    val selectedTime = remember { mutableStateOf("") }
-    val selectedDate = remember { mutableStateOf("") }
-    val selectedLocationText = remember { mutableStateOf("") }
-
+fun CheckOutPage(modifier: Modifier = Modifier, navController: NavHostController, productIds: List<String>) {
     val context = LocalContext.current
 
-    fun calculateAndAssign() {
-        subTotal.value = 0f
-        discount.value = 0f
-        tax.value = 0f
-        total.value = 0f
+    val product = remember { mutableStateOf<ProductModel?>(null) }
+    val selectedDate = remember { mutableStateOf("") }
+    val selectedTime = remember { mutableStateOf("") }
+    val selectedLocationText = remember { mutableStateOf("") }
 
-        productList.forEach {
-            if (it.actualPrice.isNotEmpty()) {
-                val quantity = userModel.value.cartItems[it.id] ?: 0
-                subTotal.value += it.actualPrice.toFloat() * quantity
-            }
-        }
+    val discountPercentage = AppUtil.getDiscountPercentage()
+    val taxPercentage = AppUtil.getTaxPercentage()
 
-        discount.value = subTotal.value * (AppUtil.getDiscountPercentage() / 100f)
-        tax.value = subTotal.value * (AppUtil.getTaxPercentage() / 100f)
-        total.value = subTotal.value - discount.value + tax.value
-    }
+    val formatter = NumberFormat.getNumberInstance(Locale("id", "ID"))
 
-    LaunchedEffect(Unit) {
-        Firebase.firestore.collection("users")
-            .document(FirebaseAuth.getInstance().currentUser?.uid!!)
-            .get().addOnCompleteListener {
-                if (it.isSuccessful) {
-                    val result = it.result.toObject(UserModel::class.java)
-                    if (result != null) {
-                        userModel.value = result
+    // Ambil ID pertama untuk single booking
+    val productId = productIds.firstOrNull() ?: ""
 
-                        Firebase.firestore.collection("data")
-                            .document("stok").collection("products")
-                            .whereIn("id", userModel.value.cartItems.keys.toList())
-                            .get().addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    val resultProducts =
-                                        task.result.toObjects(ProductModel::class.java)
-                                    productList.clear()
-                                    productList.addAll(resultProducts)
-                                    calculateAndAssign()
-                                }
-                            }
-                    }
+    LaunchedEffect(productId) {
+        if (productId.isNotEmpty()) {
+            Firebase.firestore.collection("data")
+                .document("stok").collection("products")
+                .document(productId)
+                .get()
+                .addOnSuccessListener {
+                    val data = it.toObject(ProductModel::class.java)
+                    product.value = data
                 }
-            }
+        }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White) // atau Color.Black, terserah kamu
-    ) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .background(Color.White)
-        ) {
-            val formatter = NumberFormat.getNumberInstance(Locale("id", "ID"))
-
+    Scaffold(
+        topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text(
-                        text = "BOOKING",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
+                    Text("BOOKING", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
                 },
                 navigationIcon = {
-                    IconButton(onClick = { GlobalNavigation.navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFFE91E63)
-                        )
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFFE91E63))
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.White, // Ganti dengan warna yang kamu mau
-                    navigationIconContentColor = Color(0xFFE91E63),
-                    titleContentColor = Color.Black
-                )
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
+        },
+        content = {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .padding(16.dp)
                     .background(Color.White)
             ) {
-                productList.forEach { product ->
-                    val quantity = userModel.value.cartItems[product.id] ?: 0
+                product.value?.let { prod ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.padding(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             AsyncImage(
-                                model = product.images.firstOrNull() ?: "",
-                                contentDescription = product.title,
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .background(Color.White, shape = RoundedCornerShape(2.dp))
+                                model = prod.images.firstOrNull() ?: "",
+                                contentDescription = prod.title,
+                                modifier = Modifier.size(80.dp)
                             )
-
                             Spacer(modifier = Modifier.width(8.dp))
-
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
+                            Column {
+                                Text(prod.title, fontWeight = FontWeight.SemiBold)
                                 Text(
-                                    text = product.title,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = "Rp${formatter.format(product.price.toFloat())}",
+                                    text = "Rp${formatter.format(prod.price.toFloat())}",
                                     fontSize = 14.sp,
                                     color = Color.Gray,
-                                    style = LocalTextStyle.current.copy(
-                                        textDecoration = TextDecoration.LineThrough
-                                    )
+                                    style = LocalTextStyle.current.copy(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough)
                                 )
-                                Text(
-                                    text = "Rp${formatter.format(product.actualPrice.toFloat())}",
-                                    fontSize = 14.sp
-                                )
+                                Text("Rp${formatter.format(prod.actualPrice.toFloat())}", fontSize = 14.sp)
                             }
-
-                            Text(
-                                text = "$quantity",
-                                fontSize = 14.sp,
-                                modifier = Modifier
-                                    .padding(end = 8.dp)
-                            )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = selectedDate.value,
+                        onValueChange = { },
+                        enabled = false,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                AppUtil.showDatePicker(context) { date -> selectedDate.value = date }
+                            },
+                        label = { Text("Tanggal") }
+                    )
+
+                    OutlinedTextField(
+                        value = selectedTime.value,
+                        onValueChange = { },
+                        enabled = false,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                AppUtil.showTimePicker(context) { time -> selectedTime.value = time }
+                            },
+                        label = { Text("Jam") }
+                    )
+
+                    OutlinedTextField(
+                        value = selectedLocationText.value,
+                        onValueChange = { selectedLocationText.value = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Lokasi") }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider()
+
+                    val subtotal = prod.actualPrice.toFloat()
+                    val discount = subtotal * (discountPercentage / 100f)
+                    val tax = subtotal * (taxPercentage / 100f)
+                    val total = subtotal - discount + tax
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    RowCheckOutItems("Subtotal", formatter.format(subtotal))
+                    RowCheckOutItems("Discount (-)", formatter.format(discount))
+                    RowCheckOutItems("Tax (+)", formatter.format(tax))
+                    RowCheckOutItems("Total", formatter.format(total))
+                    Divider()
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            if (selectedLocationText.value.isNotEmpty() &&
+                                selectedDate.value.isNotEmpty() &&
+                                selectedTime.value.isNotEmpty()
+                            ) {
+                                val bookingData = hashMapOf(
+                                    "date" to selectedDate.value,
+                                    "time" to selectedTime.value,
+                                    "location" to selectedLocationText.value,
+                                    "total" to total.toLong(),
+                                    "status" to "belum bayar",
+                                    "productId" to prod.id,
+                                    "productName" to prod.title,
+                                    "category" to prod.category
+                                )
+
+                                Firebase.firestore.collection("users")
+                                    .document(FirebaseAuth.getInstance().currentUser?.uid!!)
+                                    .collection("bookings")
+                                    .add(bookingData)
+                                    .addOnSuccessListener { docRef ->
+                                        AppUtil.showToast(context, "Booking berhasil!")
+                                        navController.navigate("payment/${docRef.id}")
+                                    }
+                                    .addOnFailureListener {
+                                        AppUtil.showToast(context, "Gagal menyimpan booking")
+                                    }
+                            } else {
+                                AppUtil.showToast(context, "Lengkapi semua data terlebih dahulu")
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4081))
+                    ) {
+                        Text("Booking Sekarang", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                } ?: run {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = if (selectedDate.value.isEmpty()) "" else selectedDate.value,
-                onValueChange = { },
-                enabled = false,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        AppUtil.showDatePicker(context) { date ->
-                            selectedDate.value = date
-                        }
-                    },
-                label = { Text("Tanggal") },
-                colors = TextFieldDefaults.colors(
-                    disabledTextColor = Color.DarkGray,
-                    disabledIndicatorColor = Color.DarkGray,
-                    disabledLabelColor = Color.DarkGray,
-                    disabledContainerColor = Color.Transparent
-                )
-            )
-
-            OutlinedTextField(
-                value = if (selectedTime.value.isEmpty()) "" else selectedTime.value,
-                onValueChange = { },
-                enabled = false,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        AppUtil.showTimePicker(context) { time ->
-                            selectedTime.value = time
-                        }
-                    },
-                label = { Text("Jam") },
-                colors = TextFieldDefaults.colors(
-                    disabledTextColor = Color.DarkGray,
-                    disabledIndicatorColor = Color.DarkGray,
-                    disabledLabelColor = Color.DarkGray,
-                    disabledContainerColor = Color.Transparent
-                )
-            )
-
-            OutlinedTextField(
-                value = if (selectedLocationText.value.isEmpty()) "" else selectedLocationText.value,
-                onValueChange = { selectedLocationText.value = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Lokasi") },
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = Color.Black,         // Garis bawah saat fokus
-                    focusedLabelColor = Color.Black,             // Label saat fokus
-                    focusedContainerColor = Color.Transparent,
-                    disabledTextColor = Color.DarkGray,
-                    disabledIndicatorColor = Color.DarkGray,
-                    disabledLabelColor = Color.DarkGray,
-                    disabledContainerColor = Color.Transparent
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(16.dp))
-
-            RowCheckOutItems(title = "Subtotal", value = formatter.format(subTotal.value))
-            Spacer(modifier = Modifier.height(8.dp))
-
-            RowCheckOutItems(title = "Discount (-)", value = formatter.format(discount.value))
-            Spacer(modifier = Modifier.height(8.dp))
-
-            RowCheckOutItems(title = "Tax (+)", value = formatter.format(tax.value))
-            Spacer(modifier = Modifier.height(8.dp))
-
-            RowCheckOutItems(title = "Total", value = formatter.format(total.value))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    if (selectedLocationText.value.isNotEmpty() &&
-                        selectedDate.value.isNotEmpty() &&
-                        selectedTime.value.isNotEmpty()
-                    ) {
-                        val product = productList.firstOrNull()
-                        val bookingData = hashMapOf(
-                            "date" to selectedDate.value,
-                            "time" to selectedTime.value,
-                            "location" to selectedLocationText.value,
-                            "total" to total.value.toLong(),
-                            "status" to "belum bayar",
-                            "productId" to (product?.id ?: ""),
-                            "productName" to (product?.title ?: ""),
-                            "category" to (product?.category ?: "")
-                        )
-
-                        Firebase.firestore.collection("users")
-                            .document(FirebaseAuth.getInstance().currentUser?.uid!!)
-                            .collection("bookings")
-                            .add(bookingData)
-                            .addOnSuccessListener { documentRef ->
-                                val bookingId = documentRef.id
-                                AppUtil.showToast(context, "Booking berhasil!")
-                                navController.navigate("payment/$bookingId")
-                            }
-                            .addOnFailureListener {
-                                AppUtil.showToast(context, "Gagal menyimpan booking")
-                            }
-                    } else {
-                        AppUtil.showToast(context, "Lengkapi semua data terlebih dahulu")
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4081))
-            ) {
-                Text(
-                    text = "Booking Sekarang",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-            }
         }
-    }
+    )
 }
 
 @Composable
@@ -322,7 +213,7 @@ fun RowCheckOutItems(title: String, value: String) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-        Text(text = "Rp$value", fontSize = 18.sp)
+        Text(title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Text("Rp$value", fontSize = 18.sp)
     }
 }

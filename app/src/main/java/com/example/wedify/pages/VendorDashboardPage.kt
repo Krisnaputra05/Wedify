@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
@@ -19,11 +20,24 @@ import androidx.navigation.NavController
 import com.example.wedify.model.ProductModel
 import com.example.wedify.viewmodel.ProductViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.android.gms.tasks.Tasks
+import com.example.wedify.ui.theme.pinkbut
 
 @Composable
 fun VendorDashboardPage(navController: NavController) {
     val viewModel: ProductViewModel = viewModel()
     val products by viewModel.products.collectAsState()
+
+    var jumlahBelumVerifikasi by remember { mutableStateOf(0) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        fetchJumlahBelumVerifikasi { jumlah ->
+            jumlahBelumVerifikasi = jumlah
+            isLoading = false
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -39,7 +53,7 @@ fun VendorDashboardPage(navController: NavController) {
             IconButton(onClick = {
                 FirebaseAuth.getInstance().signOut()
                 navController.navigate("login") {
-                    popUpTo(0) // clear semua backstack
+                    popUpTo(0)
                 }
             }) {
                 Icon(Icons.Default.Logout, contentDescription = "Logout")
@@ -48,13 +62,55 @@ fun VendorDashboardPage(navController: NavController) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = {
-                navController.navigate("add-edit-page")
-            },
-            modifier = Modifier.fillMaxWidth()
+        // Tombol horizontal
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp), // Pastikan tinggi sama
+            horizontalArrangement = Arrangement.spacedBy(8.dp) // Spasi di antara tombol
         ) {
-            Text("Tambah Produk Baru")
+            Button(
+                onClick = { navController.navigate("add-edit-page") },
+                modifier = Modifier
+                    .weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = pinkbut),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "Tambah Produk Baru",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+
+            Button(
+                onClick = { navController.navigate("verifikasi-booking") },
+                modifier = Modifier
+                    .weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "Verifikasi Transaksi",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (isLoading) {
+            Text("Memuat jumlah pembayaran belum diverifikasi...", fontSize = 14.sp, color = Color.Black)
+        } else {
+            Text(
+                "Jumlah pembayaran belum diverifikasi: $jumlahBelumVerifikasi",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Gray
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -74,7 +130,11 @@ fun VendorDashboardPage(navController: NavController) {
 }
 
 @Composable
-fun ProductCard(product: ProductModel, viewModel: ProductViewModel, navController: NavController) {
+fun ProductCard(
+    product: ProductModel,
+    viewModel: ProductViewModel,
+    navController: NavController
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -98,7 +158,8 @@ fun ProductCard(product: ProductModel, viewModel: ProductViewModel, navControlle
                 Button(
                     onClick = {
                         navController.navigate("add-edit-page/${product.id}")
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
                 ) {
                     Text("Edit")
                 }
@@ -110,12 +171,34 @@ fun ProductCard(product: ProductModel, viewModel: ProductViewModel, navControlle
                     Text("Hapus")
                 }
             }
-            Button(
-                onClick = { navController.navigate("verifikasi-booking") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Verifikasi Pembayaran")
-            }
         }
     }
+}
+
+fun fetchJumlahBelumVerifikasi(onResult: (Int) -> Unit) {
+    val firestore = FirebaseFirestore.getInstance()
+    firestore.collection("users")
+        .get()
+        .addOnSuccessListener { usersSnapshot ->
+            var total = 0
+            val tasks = mutableListOf<com.google.android.gms.tasks.Task<*>>()
+
+            for (userDoc in usersSnapshot.documents) {
+                val userId = userDoc.id
+                val task = firestore.collection("users")
+                    .document(userId)
+                    .collection("bookings")
+                    .whereEqualTo("status", "belum bayar")
+                    .get()
+                    .addOnSuccessListener { bookingSnap ->
+                        total += bookingSnap.size()
+                    }
+                tasks.add(task)
+            }
+
+            Tasks.whenAllComplete(tasks)
+                .addOnSuccessListener {
+                    onResult(total)
+                }
+        }
 }

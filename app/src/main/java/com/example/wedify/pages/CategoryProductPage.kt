@@ -31,7 +31,7 @@ fun CategoryProductPage(
     val productList = remember { mutableStateOf<List<ProductModel>>(emptyList()) }
     val categoryName = remember { mutableStateOf("Kategori") }
 
-    // Ambil nama kategori
+    // Fetch kategori dan produk dari Firestore
     LaunchedEffect(Unit) {
         val catSnap = Firebase.firestore.collection("data")
             .document("stok")
@@ -43,7 +43,6 @@ fun CategoryProductPage(
         val category = catSnap.toObject(CategoryModel::class.java)
         categoryName.value = category?.nama ?: "Kategori"
 
-        // Ambil produk
         val snapshot = Firebase.firestore.collection("data")
             .document("stok")
             .collection("products")
@@ -51,73 +50,49 @@ fun CategoryProductPage(
             .get()
             .await()
 
-        val resultList = snapshot.documents.mapNotNull { doc ->
-            doc.toObject(ProductModel::class.java)
+        productList.value = snapshot.documents.mapNotNull {
+            it.toObject(ProductModel::class.java)
         }
-        productList.value = resultList
     }
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White) // Set background keseluruhan menjadi putih
-    )
-    Column {
-        // Top App Bar
+
+    Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
         TopAppBar(
             title = {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Text(
                         text = categoryName.value,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 20.sp
-                        ),
-                        color = Color.Black
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
                     )
                 }
             },
             navigationIcon = {
                 IconButton(onClick = { GlobalNavigation.navController.popBackStack() }) {
-                    Icon(
-                        Icons.Default.ArrowBack,
-                        contentDescription = "Kembali",
-                        tint = Color(0xFFFF4081)
-                    )
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color(0xFFFF4081))
                 }
             },
-            actions = {
-                // Spacer untuk menyeimbangkan dengan navigationIcon agar teks tetap center
-                Spacer(modifier = Modifier.size(48.dp))
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.White
-            )
+            actions = { Spacer(modifier = Modifier.size(48.dp)) },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
         )
 
-
-        // Daftar Produk 2 kolom
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             items(productList.value.chunked(2)) { rowItems ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    rowItems.forEach {
-                        ProductItemView(product = it, modifier = Modifier.weight(1f))
+                    rowItems.forEach { product ->
+                        ProductItemView(product = product, modifier = Modifier.weight(1f))
                     }
-                    if (rowItems.size == 1) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+                    if (rowItems.size == 1) Spacer(modifier = Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }
 }
+

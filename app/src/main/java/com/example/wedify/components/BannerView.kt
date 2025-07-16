@@ -71,7 +71,7 @@ fun BannerView(modifier: Modifier = Modifier) {
         }
 
         Spacer(modifier = Modifier.height(10.dp))
-        val pageCount = 3
+        val pageCount = 5
         DotsIndicator(
             dotCount = pageCount,
             type = ShiftIndicatorType(
